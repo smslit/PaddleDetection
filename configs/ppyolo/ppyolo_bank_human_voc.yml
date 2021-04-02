@@ -76,7 +76,7 @@ MatrixNMS:
 LearningRate:
   # base_lr: 0.00333
   # 2 卡初始值 0.0025，nan 后除以 3
-  base_lr: 0.005
+  base_lr: 0.001667
   schedulers:
   - !PiecewiseDecay
     gamma: 0.1
@@ -120,5 +120,7 @@ EvalReader:
 TestReader:
   dataset:
     !ImageFolder
+    dataset_dir: dataset/bank/
+    anno_path: label_list.txt
     use_default_label: false
     with_background: false
