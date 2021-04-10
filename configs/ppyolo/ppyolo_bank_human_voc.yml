@@ -99,7 +99,7 @@ _READER_: 'ppyolo_bank_human_reader.yml'
 TrainReader:
   dataset:
     !VOCDataSet
-    dataset_dir: dataset/bank
+    dataset_dir: dataset/bank/human
     anno_path: train.txt
     use_default_label: false
     with_background: false
@@ -112,7 +112,7 @@ EvalReader:
     num_max_boxes: 50
   dataset:
     !VOCDataSet
-    dataset_dir: dataset/bank/
+    dataset_dir: dataset/bank/human
     anno_path: valid.txt
     use_default_label: false
     with_background: false
@@ -120,7 +120,7 @@ EvalReader:
 TestReader:
   dataset:
     !ImageFolder
-    dataset_dir: dataset/bank/
+    dataset_dir: dataset/bank/human
     anno_path: label_list.txt
     use_default_label: false
     with_background: false
