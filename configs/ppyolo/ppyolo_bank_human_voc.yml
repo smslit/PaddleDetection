@@ -1,16 +1,16 @@
 architecture: YOLOv3
 use_gpu: true
 # 数据量 * epoch_size / GPU_num / batch_size
-# 4926 * 120 / 4 / 4 => 36000
-max_iters: 36000
+# 4926 * 120 / 1 / 6 => 36000
+max_iters: 90000
 log_smooth_window: 5
 log_iter: 5
 save_dir: output
-snapshot_iter: 3000
+snapshot_iter: 9000
 metric: VOC
 pretrain_weights: https://paddle-imagenet-models-name.bj.bcebos.com/ResNet50_vd_ssld_pretrained.tar
-weights: output/ppyolo_bank_human/model_final
-num_classes: 3
+weights: output/ppyolo_bank_human_voc/model_final
+num_classes: 4
 use_fine_grained_loss: true
 use_ema: true
 ema_decay: 0.9998
@@ -35,9 +35,9 @@ YOLOv3Head:
   # anchors: [[10, 13], [16, 30], [33, 23],
   #           [30, 61], [62, 45], [59, 119],
   #           [116, 90], [156, 198], [373, 326]]
-  anchors: [[22, 47], [29, 112], [41, 170],
-            [75, 123], [62, 243], [106, 148],
-            [101, 278], [121, 384], [155, 328]]
+  anchors: [[11, 22], [18, 39], [28, 71], 
+            [30, 128], [57, 105], [50, 200], 
+            [99, 143], [78, 269], [136, 338]]
   norm_decay: 0.
   coord_conv: true
   iou_aware: true
@@ -75,17 +75,17 @@ MatrixNMS:
 
 LearningRate:
   # base_lr: 0.00333
-  # 2 卡初始值 0.0025，nan 后除以 3
-  base_lr: 0.001667
+  # 4 卡初始值 0.005，batch_size 为 4 原来为 12 ，所以再除以 3 -> 0.001667
+  base_lr: 0.000625
   schedulers:
   - !PiecewiseDecay
     gamma: 0.1
     milestones:
-    - 28800
-    - 30000
+    - 72000
+    - 79200
   - !LinearWarmup
     start_factor: 0.
-    steps: 2100
+    steps: 5100
 
 OptimizerBuilder:
   optimizer:
@@ -104,7 +104,7 @@ TrainReader:
     use_default_label: false
     with_background: false
   mixup_epoch: 350
-  batch_size: 4
+  batch_size: 6
 
 EvalReader:
   inputs_def:
@@ -120,7 +120,5 @@ EvalReader:
 TestReader:
   dataset:
     !ImageFolder
-    dataset_dir: dataset/bank/human
-    anno_path: label_list.txt
     use_default_label: false
     with_background: false
