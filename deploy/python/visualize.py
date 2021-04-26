@@ -17,11 +17,11 @@ from __future__ import division
 
 import cv2
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 from scipy import ndimage
 
 
-def visualize_box_mask(im, results, labels, mask_resolution=14, threshold=0.5):
+def visualize_box_mask(im, results, labels, mask_resolution=14, threshold=0.5, tip=None):
     """
     Args:
         im (str/np.ndarray): path of image/np.ndarray read by cv2
@@ -48,6 +48,8 @@ def visualize_box_mask(im, results, labels, mask_resolution=14, threshold=0.5):
             resolution=mask_resolution)
     if 'boxes' in results:
         im = draw_box(im, results['boxes'], labels)
+    if tip:
+        im = draw_tip(im, tip)
     if 'segm' in results:
         im = draw_segm(
             im,
@@ -197,6 +199,21 @@ def draw_box(im, np_boxes, labels):
         draw.rectangle(
             [(xmin + 1, ymin - th), (xmin + tw + 1, ymin)], fill=color)
         draw.text((xmin + 1, ymin - th), text, fill=(255, 255, 255))
+    return im
+
+
+def draw_tip(im, tip):
+    draw = ImageDraw.Draw(im)
+    font = ImageFont.truetype('NotoSansCJK-Regular.ttc', 18)
+    tw, th = font.getsize(tip)
+    padding = (12, 4)
+    x, y = 30, 100
+    draw.rectangle(
+        [(x, y), (x + tw + 2*padding[0], y + th + 2*padding[1])],
+        # fill=(221, 249, 1),
+        fill=(1, 249, 221),
+    )
+    draw.text((x + padding[0], y + padding[1]), tip, fill=(0, 0, 0), font=font)
     return im
 
 

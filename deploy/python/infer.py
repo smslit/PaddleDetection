@@ -450,14 +450,16 @@ def visualize(image_file,
               labels,
               mask_resolution=14,
               output_dir='output/',
-              threshold=0.5):
+              threshold=0.5,
+              tip=None):
     # visualize the predict result
     im = visualize_box_mask(
         image_file,
         results,
         labels,
         mask_resolution=mask_resolution,
-        threshold=threshold)
+        threshold=threshold,
+        tip=tip)
     img_name = os.path.split(image_file)[-1]
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -473,6 +475,31 @@ def print_arguments(args):
     print('------------------------------------------')
 
 
+def none_post_progress(results, labels):
+    return None
+ 
+ 
+def factory_post_progress(results, labels):
+    if 'boxes' in results:
+        boxes = results.get('boxes')
+        count_no_helmet = 0
+        for dt in boxes:
+            clsid = int(dt[0])
+            if labels[clsid] == "head":
+                count_no_helmet += 1 
+        if count_no_helmet > 0:
+            # return f"Warning: no helmet({count_no_helmet})"
+            return f"警告:未戴安全帽({count_no_helmet})"
+    return None
+ 
+
+app_post_progress = {
+    "none": none_post_progress,
+    "factory": factory_post_progress,
+    "bank": none_post_progress
+}
+ 
+
 def predict_image(detector):
     if FLAGS.run_benchmark:
         detector.predict(
@@ -483,14 +510,21 @@ def predict_image(detector):
             run_benchmark=True)
     else:
         results = detector.predict(FLAGS.image_file, FLAGS.threshold)
+        tip_info = app_post_progress.get(
+            FLAGS.application
+        )(
+            results,
+            detector.config.labels
+        )
         visualize(
             FLAGS.image_file,
             results,
             detector.config.labels,
             mask_resolution=detector.config.mask_resolution,
             output_dir=FLAGS.output_dir,
-            threshold=FLAGS.threshold)
-
+            threshold=FLAGS.threshold,
+            tip=tip_info)
+ 
 
 def predict_video(detector, camera_id):
     if camera_id != -1:
@@ -499,7 +533,7 @@ def predict_video(detector, camera_id):
     else:
         capture = cv2.VideoCapture(FLAGS.video_file)
         video_name = os.path.split(FLAGS.video_file)[-1]
-    fps = 30
+    fps = int(capture.get(cv2.CAP_PROP_FPS))
     width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
@@ -515,12 +549,19 @@ def predict_video(detector, camera_id):
         print('detect frame:%d' % (index))
         index += 1
         results = detector.predict(frame, FLAGS.threshold)
+        tip_info = app_post_progress.get(
+            FLAGS.application
+        )(
+            results,
+            detector.config.labels
+        )
         im = visualize_box_mask(
             frame,
             results,
             detector.config.labels,
             mask_resolution=detector.config.mask_resolution,
-            threshold=FLAGS.threshold)
+            threshold=FLAGS.threshold,
+            tip=tip_info)
         im = np.array(im)
         writer.write(im)
         if camera_id != -1:
@@ -592,6 +633,11 @@ if __name__ == '__main__':
         type=str,
         default="output",
         help="Directory of output visualization files.")
+    parser.add_argument(
+        "--application",
+        type=str,
+        default="none",
+        help="application(factory/bank)")
 
     FLAGS = parser.parse_args()
     print_arguments(FLAGS)
