@@ -9,7 +9,7 @@ save_dir: output
 snapshot_iter: 3000
 metric: VOC
 pretrain_weights: https://paddle-imagenet-models-name.bj.bcebos.com/ResNet50_vd_ssld_pretrained.tar
-weights: output/ppyolo_bank_mask_raw_anchor/model_final
+weights: output/ppyolo_bank_mask_voc/model_final
 num_classes: 2
 use_fine_grained_loss: true
 use_ema: true
@@ -35,9 +35,9 @@ YOLOv3Head:
   # anchors: [[10, 13], [16, 30], [33, 23],
   #           [30, 61], [62, 45], [59, 119],
   #           [116, 90], [156, 198], [373, 326]]
-  anchors: [[5, 11], [8, 18], [12, 23], 
-            [15, 34], [21, 30], [29, 36], 
-            [23, 47], [34, 54], [47, 90]]
+  anchors: [[5, 11], [8, 17], [12, 24], 
+            [19, 28], [16, 38], [27, 34], 
+            [24, 48], [35, 50], [46, 87]]
   norm_decay: 0.
   coord_conv: true
   iou_aware: true
@@ -76,7 +76,7 @@ MatrixNMS:
 LearningRate:
   # base_lr: 0.00333
   # 2 卡初始值 0.0025，nan 后除以 3 -> 0.0008333
-  base_lr: 0.0025
+  base_lr: 0.00125
   schedulers:
   - !PiecewiseDecay
     gamma: 0.1
@@ -120,7 +120,5 @@ EvalReader:
 TestReader:
   dataset:
     !ImageFolder
-    dataset_dir: dataset/bank/mask
-    anno_path: label_list.txt
     use_default_label: false
     with_background: false
