@@ -79,3 +79,5 @@ dataset/wider_face/WIDER_train
 dataset/wider_face/WIDER_val
 dataset/wider_face/wider_face_split
 dataset/bank
+
+demo/factory
