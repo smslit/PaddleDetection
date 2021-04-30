@@ -476,26 +476,76 @@ def print_arguments(args):
 
 
 def none_post_progress(results, labels):
-    return None
+    return None, results
  
  
 def factory_post_progress(results, labels):
     if 'boxes' in results:
         boxes = results.get('boxes')
-        count_no_helmet = 0
+        count = {cls: 0 for cls in labels}
         for dt in boxes:
             clsid = int(dt[0])
-            if labels[clsid] == "head":
-                count_no_helmet += 1 
-        if count_no_helmet > 0:
-            # return f"Warning: no helmet({count_no_helmet})"
-            return f"警告:未戴安全帽({count_no_helmet})"
-    return None
+            count[labels[clsid]] += 1
+        return f"人员:{count['body']}，未戴安全帽:{count['head']}", results
+    return None, results
+
+
+def factory_truck_post_progress(results, labels):
+    if "boxes" in results:
+        boxes = results.get("boxes")
+        count = {cls: 0 for cls in labels}
+        for dt in boxes:
+            clsid = int(dt[0])
+            count[labels[clsid]] += 1
+        if count["irrigation_truck"] > 0:
+            return "罐车:进入厂区", results
+        return None, results
+    return None, results
+
+def factory_eat_post_progress(results, labels):
+    if "boxes" in results:
+        boxes = results.get("boxes")
+        count = {cls: 0 for cls in labels}
+        for dt in boxes:
+            clsid = int(dt[0])
+            count[labels[clsid]] += 1
+        if count["food"] > 0:
+            return "存在吃饭或饮水行为", results
+        return None, results
+    return None, results
  
+def factory_chlorine_post_progress(results, labels):
+    tip_info = None
+    if "boxes" in results:
+        boxes = results.get("boxes")
+        count = {cls: 0 for cls in labels}
+        for dt in boxes:
+            clsid = int(dt[0])
+            count[labels[clsid]] += 1
+        if count["body"] > count["mask3"]:
+            tip_info = "面罩:正常; "
+        else:
+            tip_info = "面罩:疑似有未戴情况; "
+        if count["body"] > count["helmet_head"]:
+            tip_info += "安全帽:疑似有未戴情况; "
+        else:
+            tip_info += "安全帽:正常; "
+        if count["body"] < 2:
+            tip_info += f"操作人员:{count['body']}，疑似过少人员"
+        elif count["body"] > 3:
+            tip_info += f"操作人员:{count['body']}，疑似过多人员"
+        else:
+            tip_info += f"操作人员:{count['body']}，正常"
+        return tip_info, results
+    return tip_info, results
+
 
 app_post_progress = {
     "none": none_post_progress,
     "factory": factory_post_progress,
+    "factory_eat": factory_eat_post_progress,
+    "factory_truck": factory_truck_post_progress,
+    "factory_chlorine": factory_chlorine_post_progress,
     "bank": none_post_progress
 }
  
@@ -510,7 +560,7 @@ def predict_image(detector):
             run_benchmark=True)
     else:
         results = detector.predict(FLAGS.image_file, FLAGS.threshold)
-        tip_info = app_post_progress.get(
+        tip_info, results = app_post_progress.get(
             FLAGS.application
         )(
             results,
@@ -549,7 +599,7 @@ def predict_video(detector, camera_id):
         print('detect frame:%d' % (index))
         index += 1
         results = detector.predict(frame, FLAGS.threshold)
-        tip_info = app_post_progress.get(
+        tip_info, results = app_post_progress.get(
             FLAGS.application
         )(
             results,
